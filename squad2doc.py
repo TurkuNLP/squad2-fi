@@ -50,7 +50,7 @@ def para2txt(p,p_idx,doc):
     
     pgraph=doc.add_paragraph()
     t=f"Text number {p_idx}"
-    total_len+=len(t)
+    total_len+=len(t)+1
     pgraph.add_run(t).bold=True
     
     pgraph=doc.add_paragraph('')
@@ -72,7 +72,7 @@ def para2txt(p,p_idx,doc):
             #print()
 
     #make a lookup table such that each unique overlap of answer ids has a color of its own whew
-    color_lookup={"":0}
+    color_lookup={"":-1}
     for answer_list in color_map: #this is a list of all questions which overlap as "questionid_answeridx" strings
         answer_list="+".join(answer_list) #make it a single string
         color_lookup.setdefault(answer_list,len(color_lookup))
@@ -85,10 +85,10 @@ def para2txt(p,p_idx,doc):
     for span_list,txt in spans:
         r=pgraph.add_run(txt)
         font_idx=color_lookup.get("+".join(span_list),None)
-        if font_idx is not None:
+        if font_idx >=0:
             r.font.color.rgb=rgb_colors[font_idx]
 
-    total_len+=len(ctx)
+    total_len+=len(ctx)+1
 
     question_list=[]
     for q_idx,qa in enumerate(p["qas"]):
@@ -99,7 +99,7 @@ def para2txt(p,p_idx,doc):
         total_len+=len(t)
         pgraph.add_run(t).bold=True
         pgraph=doc.add_paragraph(q)
-        total_len+=len(q)
+        total_len+=len(q)+2
 
     return total_len, color_lookup, question_list
 
@@ -131,7 +131,7 @@ if __name__=="__main__":
                     print(json.dumps(docmeta,sort_keys=True,ensure_ascii=False),file=meta,flush=True)
                     doc.add_page_break()
                     d_idx+=1
-                    if total_len>950000: #document full!
+                    if total_len>900000: #document full!
                         doc.save(f"squad2-en/squad2_{file_counter:03d}.docx")
                         file_counter+=1
                         total_len=0
