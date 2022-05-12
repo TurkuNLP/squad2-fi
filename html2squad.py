@@ -17,8 +17,6 @@ def is_tag(elem):
 
 def get_answer(tag):
     ans = tag.get_text().replace("\n", " ")
-    #color = tag['color']
-    #color_idx = colors.index(color) # Matches the idx in meta.jsonl
     return ans
 
 """
@@ -59,6 +57,7 @@ with open('squad2-fi-raw/html/squad2_000 fi.html', 'r') as file:
             para = elem.find_next("p")
             para_text = para.get_text()
             ans_colors = []
+            color_ids = []
             answers = []
             answer_pos = []
             for tag in para("font"):
@@ -66,11 +65,14 @@ with open('squad2-fi-raw/html/squad2_000 fi.html', 'r') as file:
                 if tag.get("color") is None:
                     tag = tag.get_text()
                 else:
+                    color = tag['color']
+                    color_ids.append(colors.index(color)) # Matches the idx in meta.jsonl
                     answers.append(get_answer(tag))
-                    ans_colors.append(tag['color'])
-            answer_pos = get_ans_pos(para, ans_colors)
+                    ans_colors.append(color)
+                answer_pos = get_ans_pos(para, ans_colors)
             #print(para_text)
             print("Colors: ",ans_colors)
+            print("Colors: ",color_ids)
             print("Positions: ",answer_pos)
             print("Answers: ",answers)
             continue
