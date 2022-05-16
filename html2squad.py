@@ -26,14 +26,20 @@ tags themselves.
 def get_ans_pos(para, colors):
     positions = []
     para = str(para)
+    # These all mess up the indexing
+    para = para.replace("&amp;", " ").replace('&lt;', " ").replace('&gt;', " ")
+    para = para.replace('<font face="ＭＳ 明朝">', "") # Chinese text tag
+    para = para.replace('</font>', "") # Replace all closing font tags
+    para = para.replace('<font face=""><span lang="ar-SA">', "").replace('</span>', "")
+    para = para.replace('<br/>', "") # line break
     # print(para) # print the whole paragraph with tags to make sense of this all
-    font_tag_len = 29 # Length of the whole font tag
+    font_tag = 22 # Length of the opening font tag
     color_start = 13 # Length from the color to the start of the font tag
     p_tag = 33 # length of the p tag in the start of the string
     tags_len = color_start + p_tag
     for i,color in enumerate(colors):
         # Get the positions of the answers in plain text paragraphs
-        index = para.find(color)-font_tag_len*i-tags_len
+        index = para.find(color)-font_tag*i-tags_len
         positions.append(index)
     return positions
 
@@ -68,7 +74,7 @@ with open('squad2-fi-raw/html/squad2_000 fi.html', 'r') as file:
                     color_ids.append(colors.index(color)) # Matches the idx in meta.jsonl
                     answers.append(get_answer(tag))
                     ans_colors.append(color)
-                answer_pos = get_ans_pos(para, ans_colors)
+                    answer_pos = get_ans_pos(para, ans_colors)
             #print(para_text)
             print("Colors: ",ans_colors)
             print("Color ID's: ",color_ids)
