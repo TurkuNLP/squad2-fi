@@ -48,15 +48,29 @@ def get_ans_pos(para, colors):
         seen.append(color)
     return positions
 
-json = []
+json_ids = []
+json_qas = []
 counter = 0
 with jsonlines.open('squad2-en/meta.jsonl', 'r') as squad:
     lines = [obj for obj in squad]
     for title in lines:
         for para in title["paragraphs"]:
             for question in para[2]:
-                json.append(question)
+                json_ids.append(question)
 
+    for title in lines:
+        for para in title["paragraphs"]:
+            for id,color in para[1].items():
+                if color == -1:
+                    pass
+                elif '+' in id:
+                    id_list = id.split('+')
+                    for id in id_list:
+                        ques, ans = id.split('_')
+                        json_qas.append([ques,int(ans),color])
+                else:
+                    ques, ans = id.split('_')
+                    json_qas.append([ques,int(ans),color])
 
 
 for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
@@ -71,8 +85,6 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
             # Get the document ID's
             if is_bu(elem):
                 doc_id = ''.join([i for i in elem.get_text().split() if i.isdigit()])
-                print()
-                print('DOC_ID ' + doc_id)
                 continue
             
             
@@ -81,7 +93,6 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
                 questions = []
                 para_id = ''.join([i for i in elem.get_text().split() if i.isdigit()])
                 print()
-                print('PARA_ID ' + para_id)
                 print()
                 para = elem.find_next("p")
                 para_text = para.get_text().replace("\n", " ")
@@ -99,18 +110,20 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
                         answers.append(get_answer(tag))
                         ans_colors.append(color)
                         answer_pos = get_ans_pos(para, ans_colors)
-                print(para_text)
-                print(ans_colors)
-                print(color_ids)
-                print(answer_pos)
-                print(answers)
+                print(doc_id,para_id,para_text)
+                print(doc_id,para_id,ans_colors)
+                print(doc_id,para_id,color_ids)
+                print(doc_id,para_id,answer_pos)
+                print(doc_id,para_id,answers)
                 continue
             
             # Get questions
             if is_b(elem) and "Kysymys" in elem.get_text():
+                qa_pair = []
+                for qa in json_qas:
+                    if qa[0] == json_ids[counter]:
+                        qa_pair.append(str(qa[1])+':'+str(qa[2]))
                 questions.append(elem.find_next("p").get_text().replace("\n", " "))
-                print(json[counter], elem.find_next("p").get_text().replace("\n", " "))
+                print(doc_id,para_id,json_ids[counter],
+                        elem.find_next("p").get_text().replace("\n", " "), qa_pair)
                 counter += 1
-
-
-
