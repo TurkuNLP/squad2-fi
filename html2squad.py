@@ -119,10 +119,14 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
                 qa_pair = []
                 for qa in json_qas:
                     if qa[0] == json_ids[counter]:
-                        if qa[2] in color_ids: 
-                            col_pos = color_ids.index(qa[2])
-                            word = answers[col_pos]
-                            qa_pair.append(str(qa[1])+': '+word)
+                        for i,color in enumerate(color_ids):
+                            if qa[2] == color_ids[i]:
+                                word = answers[i]
+                                qa_pair.append(str(qa[1])+': '+word)
+                        #if qa[2] in color_ids: 
+                        #    col_pos = color_ids.index(qa[2])
+                        #    word = answers[col_pos]
+                        #    qa_pair.append(str(qa[1])+': '+word)
                 questions.append(elem.find_next("p").get_text().replace("\n", " "))
                 print(doc_id,para_id,json_ids[counter],
                         elem.find_next("p").get_text().replace("\n", " "), qa_pair)
