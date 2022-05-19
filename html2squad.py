@@ -116,14 +116,15 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
             
             # Get questions
             if is_b(elem) and "Kysymys" in elem.get_text():
+                answer = elem.find_next("p").get_text().replace("\n", " ")
                 qa_pair = []
                 for qa in json_qas:
                     if qa[0] == json_ids[counter]:
                         for i,color in enumerate(color_ids):
                             if qa[2] == color_ids[i]:
                                 word = answers[i]
-                                qa_pair.append(str(qa[1])+': '+word)
+                                pos = answer_pos[i]
+                                qa_pair.append([qa[1],pos, word])
                 questions.append(elem.find_next("p").get_text().replace("\n", " "))
-                print(doc_id,para_id,json_ids[counter],
-                        elem.find_next("p").get_text().replace("\n", " "), qa_pair)
+                print(doc_id,para_id,json_ids[counter],answer,sorted(qa_pair))
                 counter += 1
