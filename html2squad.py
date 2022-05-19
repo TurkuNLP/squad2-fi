@@ -39,13 +39,11 @@ def get_ans_pos(para, colors):
     color_start = 13 # Length from the color to the start of the font tag
     p_tag = 33 # length of the p tag in the start of the string
     tags_len = color_start + p_tag
-    seen = []
     for i,color in enumerate(colors):
         # Get the positions of the answers in plain text paragraphs
-        if color not in seen:
-            index = para.find(color)-font_tag*i-tags_len
-            positions.append(index)
-        seen.append(color)
+        index = para.find(color)-font_tag*i-tags_len
+        para = para.replace(color,'#######',1)
+        positions.append(index)
     return positions
 
 json_ids = []
