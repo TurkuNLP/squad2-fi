@@ -46,13 +46,16 @@ def get_ans_pos(para, colors):
         positions.append(index)
     return positions
 
+titles = []
 json_ids = []
 json_qas = []
+title_counter = 0
 counter = 0
 with jsonlines.open('squad2-en/meta.jsonl', 'r') as squad:
     lines = [obj for obj in squad]
-    for title in lines:
-        for para in title["paragraphs"]:
+    for doc in lines:
+        titles.append(doc['title'])
+        for para in doc["paragraphs"]:
             for question in para[2]:
                 json_ids.append(question)
 
@@ -82,6 +85,11 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
             
             # Get the document ID's
             if is_bu(elem):
+                title = titles[title_counter]
+                title_counter += 1
+                print()
+                print()
+                print(title)
                 doc_id = ''.join([i for i in elem.get_text().split() if i.isdigit()])
                 continue
             
