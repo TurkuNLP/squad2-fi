@@ -75,7 +75,10 @@ with jsonlines.open('squad2-en/meta.jsonl', 'r') as squad:
                     ques, ans = id.split('_')
                     json_qas.append([ques,int(ans),color])
 
-json_dict = {"version": "v2.0", "data":[]}
+json_dict = {
+        "version": "v2.0", 
+        "data":[]
+        }
 for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
     with open(file, 'r') as file:
         soup = BeautifulSoup(file,'html.parser')
@@ -89,7 +92,10 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
             if is_bu(elem):
                 title = titles[title_counter]
                 title_counter += 1
-                title_dict = {"title": title, "paragraphs": []}
+                title_dict = {
+                        "title": title, 
+                        "paragraphs": []
+                        }
                 json_dict["data"].append(title_dict)
                 doc_id = int(''.join([i for i in elem.get_text().split() if i.isdigit()]))
                 continue
@@ -113,7 +119,10 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
                         answers.append(get_answer(tag))
                         ans_colors.append(color)
                         answer_pos = get_ans_pos(para, ans_colors)
-                para_dict = {"qas": [], "context": para_str}
+                para_dict = {
+                        "qas": [], 
+                        "context": para_str
+                        }
                 json_dict["data"][doc_id]["paragraphs"].append(para_dict)
                 continue
             
@@ -121,23 +130,42 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
             if is_b(elem) and "Kysymys" in elem.get_text():
                 question_str = elem.find_next("p").get_text().replace("\n", " ")
                 ques_id = int(''.join([i for i in elem.get_text().split() if i.isdigit()]))
-                ans_pos_pairs = []
+                ans_pos_raw = []
                 for qa in json_qas:
                     if qa[0] == json_ids[counter]:
                         for i,color in enumerate(color_ids):
                             if qa[2] == color_ids[i]:
                                 word = answers[i]
                                 pos = answer_pos[i]
-                                ans_pos_pairs.append([qa[1],pos, word])
+                                ans_pos_raw.append([qa[1],pos, word])
                 is_impossible = False
-                if len(ans_pos_pairs) == 0:
+                if len(ans_pos_raw) == 0:
                     is_impossible = True
-                question_dict = {"question": question_str, "id": json_ids[counter], "answers": [], "is_impossible": is_impossible}
+                
+                question_dict = {
+                        "question": question_str, 
+                        "id": json_ids[counter], 
+                        "answers": [], 
+                        "is_impossible": is_impossible
+                        }
                 json_dict["data"][doc_id]["paragraphs"][para_id]["qas"].append(question_dict)
-                for answer in sorted(ans_pos_pairs):
-                    answer_dict = {"text": answer[2], "answer_start": answer[1]}
+                
+                answers_str = []
+                for answer in sorted(ans_pos_raw):
+                    if len(answers_str) <= answer[0]:
+                        answers_str.append(answer[2])
+                    else:
+                        answers_str[answer[0]] += answer[2]
+                
+                for answer in sorted(ans_pos_raw):
+                    print(answers_str[answer[0]])
+                    answer_dict = {
+                            "text": answers_str[answer[0]],
+                            "answer_start": answer[1],
+                            "all_answer_starts": ans_pos_raw
+                            }
                     json_dict["data"][doc_id]["paragraphs"][para_id]["qas"][ques_id]["answers"].append(answer_dict)
                 counter += 1
 
-with open("squad_fi.json", "w") as json_file:
+with open("squad2_fi.json", "w") as json_file:
     json.dump(json_dict,json_file)
