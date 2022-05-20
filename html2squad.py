@@ -1,11 +1,11 @@
 import bs4
 from bs4 import BeautifulSoup
+import json
 import jsonlines
 from pathlib import Path
 
 # colors from palette.txt for easier access
 colors = ['#696969','#a9a9a9','#dcdcdc','#2f4f4f','#556b2f','#6b8e23','#a0522d','#228b22','#191970','#8b0000','#483d8b','#3cb371','#bc8f8f','#663399','#008080','#bdb76b','#4682b4','#d2691e','#9acd32','#cd5c5c','#00008b','#32cd32','#daa520','#7f007f','#8fbc8f','#b03060','#66cdaa','#9932cc','#ff4500','#00ced1','#ff8c00','#ffd700','#c71585','#0000cd','#deb887','#00ff00','#00ff7f','#4169e1','#e9967a','#dc143c','#00ffff','#00bfff','#f4a460','#9370db','#0000ff','#a020f0','#adff2f','#ff6347','#da70d6','#d8bfd8','#ff00ff','#db7093','#f0e68c','#ffff54','#6495ed','#dda0dd','#90ee90','#87ceeb','#ff1493','#afeeee','#7fffd4','#ff69b4','#ffe4c4','#ffb6c1']
-
 
 def is_bu(elem): #is this a bold_underline?
     return len(list(elem.select("u > b")))>0 or len(list(elem.select("b > u")))>0
@@ -42,6 +42,8 @@ def get_ans_pos(para, colors):
     for i,color in enumerate(colors):
         # Get the positions of the answers in plain text paragraphs
         index = para.find(color)-font_tag*i-tags_len
+        # Prevent indexing the same tag twice when there is multiple tags with
+        # the same color. 
         para = para.replace(color,'#######',1)
         positions.append(index)
     return positions
@@ -73,7 +75,7 @@ with jsonlines.open('squad2-en/meta.jsonl', 'r') as squad:
                     ques, ans = id.split('_')
                     json_qas.append([ques,int(ans),color])
 
-
+json_dict = {"version": "v2.0", "data":[]}
 for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
     with open(file, 'r') as file:
         soup = BeautifulSoup(file,'html.parser')
@@ -87,20 +89,16 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
             if is_bu(elem):
                 title = titles[title_counter]
                 title_counter += 1
-                print()
-                print()
-                print(title)
-                doc_id = ''.join([i for i in elem.get_text().split() if i.isdigit()])
+                title_dict = {"title": title, "paragraphs": []}
+                json_dict["data"].append(title_dict)
+                doc_id = int(''.join([i for i in elem.get_text().split() if i.isdigit()]))
                 continue
             
             # Get the answers
             if is_b(elem) and "numero" in elem.get_text():
-                questions = []
-                para_id = ''.join([i for i in elem.get_text().split() if i.isdigit()])
-                print()
-                print()
+                para_id = int(''.join([i for i in elem.get_text().split() if i.isdigit()]))
                 para = elem.find_next("p")
-                para_text = para.get_text().replace("\n", " ")
+                para_str = para.get_text().replace("\n", " ")
                 ans_colors = []
                 color_ids = []
                 answers = []
@@ -115,24 +113,31 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
                         answers.append(get_answer(tag))
                         ans_colors.append(color)
                         answer_pos = get_ans_pos(para, ans_colors)
-                print(doc_id,para_id,para_text)
-                print(doc_id,para_id,ans_colors)
-                print(doc_id,para_id,color_ids)
-                print(doc_id,para_id,answer_pos)
-                print(doc_id,para_id,answers)
+                para_dict = {"qas": [], "context": para_str}
+                json_dict["data"][doc_id]["paragraphs"].append(para_dict)
                 continue
             
             # Get questions
             if is_b(elem) and "Kysymys" in elem.get_text():
-                answer = elem.find_next("p").get_text().replace("\n", " ")
-                qa_pair = []
+                question_str = elem.find_next("p").get_text().replace("\n", " ")
+                ques_id = int(''.join([i for i in elem.get_text().split() if i.isdigit()]))
+                ans_pos_pairs = []
                 for qa in json_qas:
                     if qa[0] == json_ids[counter]:
                         for i,color in enumerate(color_ids):
                             if qa[2] == color_ids[i]:
                                 word = answers[i]
                                 pos = answer_pos[i]
-                                qa_pair.append([qa[1],pos, word])
-                questions.append(elem.find_next("p").get_text().replace("\n", " "))
-                print(doc_id,para_id,json_ids[counter],answer,sorted(qa_pair))
+                                ans_pos_pairs.append([qa[1],pos, word])
+                is_impossible = False
+                if len(ans_pos_pairs) == 0:
+                    is_impossible = True
+                question_dict = {"question": question_str, "id": json_ids[counter], "answers": [], "is_impossible": is_impossible}
+                json_dict["data"][doc_id]["paragraphs"][para_id]["qas"].append(question_dict)
+                for answer in sorted(ans_pos_pairs):
+                    answer_dict = {"text": answer[2], "answer_start": answer[1]}
+                    json_dict["data"][doc_id]["paragraphs"][para_id]["qas"][ques_id]["answers"].append(answer_dict)
                 counter += 1
+
+with open("squad_fi.json", "w") as json_file:
+    json.dump(json_dict,json_file)
