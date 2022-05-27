@@ -85,6 +85,20 @@ with jsonlines.open('squad2-en/meta.jsonl', 'r') as squad:
                     ques, ans = id.split('_')
                     meta_qas.append([ques, int(ans), color])
 
+impossibles = []
+with open('squad2-en/squad2.0/dev-v2.0.json', 'r') as dev, open('squad2-en/squad2.0/train-v2.0.json', 'r') as train:
+    dev = json.loads(dev.read())
+    train = json.loads(train.read())
+    for line in train['data']:
+        for line in line['paragraphs']:
+            for line in line['qas']:
+                impossibles.append([line['id'], line['is_impossible']])
+    for line in dev['data']:
+        for line in line['paragraphs']:
+            for line in line['qas']:
+                impossibles.append([line['id'], line['is_impossible']])
+
+
 json_dict = {
     "version": "v2.0",
     "data": []
@@ -153,39 +167,54 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
                                 word = answers[i]
                                 pos = answer_pos[i]
                                 ans_pos_raw.append([qa[1], pos, word])
-                is_impossible = False
-                if len(ans_pos_raw) == 0:
-                    is_impossible = True
 
-                question_dict = {
-                    "question": question_str,
-                    "id": meta_ids[counter],
-                    "answers": [],
-                    "is_impossible": is_impossible
-                }
+                if impossibles[counter][1] == True:
+                    question_dict = {
+                        "plausible_answers": [],
+                        "question": question_str,
+                        "id": meta_ids[counter],
+                        "answers": [],
+                        "is_impossible": impossibles[counter][1]
+                    }
+                else:
+                    question_dict = {
+                        "question": question_str,
+                        "id": meta_ids[counter],
+                        "answers": [],
+                        "is_impossible": impossibles[counter][1]
+                    }
                 json_dict["data"][doc_id]["paragraphs"][para_id]["qas"].append(
                     question_dict)
 
                 answers_str = []
-                for answer in sorted(ans_pos_raw):
-                    if len(answers_str) <= answer[0]:
-                        answers_str.append([answer[0], answer[2], answer[1]])
+                ans_pos_raw = sorted(ans_pos_raw)
+                for i,answer in enumerate(ans_pos_raw):
+                    if i == 0:
+                        answers_str.append([answer[0],answer[2],answer[1]])
+                    elif answer[0] != ans_pos_raw[i-1][0]:
+                        answers_str.append([answer[0],answer[2],answer[1]])
                     else:
-                        answers_str[answer[0]][1] += answer[2]
+                        for ans in answers_str:
+                            if ans[0] == answer[0]:
+                                ans[1] += answer[2]
 
                 for answer in answers_str:
                     answer_dict = {
                         "text": answer[1],
                         "answer_start": answer[2],
-                        "texts": [text[2] for text in ans_pos_raw if text[0] == answer[0]],
-                        "starts": [text[1] for text in ans_pos_raw if text[0] == answer[0]]
+                        "texts": [text[2] for text in sorted(ans_pos_raw) if text[0] == answer[0]],
+                        "starts": [text[1] for text in sorted(ans_pos_raw) if text[0] == answer[0]]
                     }
                     all_answer_starts_dict = {
                         "separate_answer_starts": ans_pos_raw
                     }
-                    json_dict["data"][doc_id]["paragraphs"][para_id]["qas"][ques_id]["answers"].append(
-                        answer_dict)
+                    if impossibles[counter][1] == True:
+                        json_dict["data"][doc_id]["paragraphs"][para_id]["qas"][ques_id]["plausible_answers"].append(
+                            answer_dict)
+                    else:
+                        json_dict["data"][doc_id]["paragraphs"][para_id]["qas"][ques_id]["answers"].append(
+                            answer_dict)
                 counter += 1
 
-with open("squad2_fi2.json", "w") as json_file:
+with open("squad2_fi.json", "w") as json_file:
     json.dump(json_dict, json_file)
