@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# mac
+.DS_Store
+
+# Random
+parsed_html.txt
+squad2-en/squad2.0/
+squad2_fi/squad2_fi.json
+test.py
+test.txt
+test_answers.py
