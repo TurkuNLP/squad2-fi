@@ -188,11 +188,11 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
 
                 answers_str = []
                 ans_pos_raw = sorted(ans_pos_raw)
-                for i,answer in enumerate(ans_pos_raw):
+                for i, answer in enumerate(ans_pos_raw):
                     if i == 0:
-                        answers_str.append([answer[0],answer[2],answer[1]])
+                        answers_str.append([answer[0], answer[2], answer[1]])
                     elif answer[0] != ans_pos_raw[i-1][0]:
-                        answers_str.append([answer[0],answer[2],answer[1]])
+                        answers_str.append([answer[0], answer[2], answer[1]])
                     else:
                         for ans in answers_str:
                             if ans[0] == answer[0]:
