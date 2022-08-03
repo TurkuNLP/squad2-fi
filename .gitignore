@@ -132,9 +132,7 @@ dmypy.json
 .DS_Store
 
 # Random
-parsed_html.txt
+testing/
 squad2-en/squad2.0/
 squad2_fi/squad2_fi.json
-test.py
-test.txt
-test_answers.py
+

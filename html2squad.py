@@ -2,7 +2,15 @@ import bs4
 from bs4 import BeautifulSoup
 import json
 import jsonlines
+import os
 from pathlib import Path
+
+# Paths to all the required files
+os.mkdir("squad2_fi/")
+path_to_raw_html = "squad2-fi-raw/html/"
+path_to_full_json = "squad2_fi/squad2_fi.json"
+path_to_dev_json = "squad2_fi/dev-v2.0.json"
+path_to_train_json = "squad2_fi/train-v2.0.json"
 
 # colors from palette.txt for easier access
 colors = ['#696969', '#a9a9a9', '#dcdcdc', '#2f4f4f', '#556b2f', '#6b8e23', '#a0522d', '#228b22', '#191970', '#8b0000', '#483d8b', '#3cb371', '#bc8f8f', '#663399', '#008080', '#bdb76b', '#4682b4', '#d2691e', '#9acd32', '#cd5c5c', '#00008b', '#32cd32', '#daa520', '#7f007f', '#8fbc8f', '#b03060', '#66cdaa', '#9932cc', '#ff4500', '#00ced1', '#ff8c00', '#ffd700',
@@ -103,7 +111,7 @@ json_dict = {
     "version": "v2.0",
     "data": []
 }
-for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
+for file in sorted(Path(path_to_raw_html).glob('*.html')):
     with open(file, 'r') as file:
         soup = BeautifulSoup(file, 'html.parser')
         questions = []
@@ -216,5 +224,35 @@ for file in sorted(Path('squad2-fi-raw/html/').glob('*.html')):
                             answer_dict)
                 counter += 1
 
-with open("squad2_fi.json", "w") as json_file:
+
+# Create one full json file with all data
+with open(path_to_full_json, "w") as json_file:
     json.dump(json_dict, json_file)
+
+
+# Split full json file into dev & train
+dev_dict = {
+    "version": "v2.0",
+    "data": []
+}
+
+train_dict = {
+    "version": "v2.0",
+    "data": []
+}
+
+with open(path_to_full_json, "r") as in_file:
+    squad_fi = json.loads(in_file.read())
+    count = 0
+    for line in squad_fi["data"]:
+        if count < 442:
+            train_dict["data"].append(line)
+        if count >= 442:
+            dev_dict["data"].append(line)
+        count += 1
+
+with open(path_to_dev_json, "w") as dev_file:
+    json.dump(dev_dict, dev_file)
+ 
+with open(path_to_train_json, "w") as train_file:
+    json.dump(train_dict, train_file)
