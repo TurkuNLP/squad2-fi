@@ -9,7 +9,7 @@ Download the original SQuAD2.0
 [train](https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json) and
 [dev](https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json) files
 and put them in the `squad2-en` folder. Then run the script to convert them from
-`.json` to `.docx`:
+`.json` to `.docx`: (`pip install -r requirements.txt` first if needed)
 
 ```
 python3 squad2doc.py squad2-en/dev-v2.0.json squad2-en/train-v2.0.json
