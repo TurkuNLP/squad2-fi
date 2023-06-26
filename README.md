@@ -8,8 +8,8 @@ SQuAD2.0 to Finnish (or other languages).
 Download the original SQuAD2.0
 [train](https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json) and
 [dev](https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json) files
-and put them in the `squad2-en` folder. Then run the script to convert them from
-`.json` to `.docx`: (`pip install -r requirements.txt` first if needed)
+and put them into the `squad2-en/` folder. Then run the script to convert them from
+`.json` to `.docx` (`pip install -r requirements.txt` first if needed):
 
 ```
 python3 squad2doc.py squad2-en/dev-v2.0.json squad2-en/train-v2.0.json
@@ -22,7 +22,7 @@ to map the answers to the questions after translating the `.docx` files.
 ## 2. Run the .docx files through DeepL
 
 Feed the `.docx` files to [DeepL](https://www.deepl.com/translator) and save the
-translated files to the `squad2-fi-raw` folder.
+translated files into the `squad2-fi-raw/` folder.
 
 ## 3. Convert the .docx files to html
 
@@ -45,4 +45,4 @@ The last step is to parse the html files to create the final Finnish JSON files:
 python3 html2squad.py
 ```
 
-The final dataset is then created to the `squad2_fi` folder.
+The final dataset is then created into the `squad2_fi/` folder.
