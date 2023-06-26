@@ -1,12 +1,15 @@
-import bs4
-from bs4 import BeautifulSoup
 import json
-import jsonlines
 import os
 from pathlib import Path
 
+import bs4
+import jsonlines
+from bs4 import BeautifulSoup
+
 # Paths to all the required files
-os.mkdir("squad2_fi/")
+target_dir = "squad2_fi/"
+if not os.path.exists(target_dir):
+    os.mkdir(target_dir)
 path_to_raw_html = "squad2-fi-raw/html/"
 path_to_full_json = "squad2_fi/squad2_fi.json"
 path_to_dev_json = "squad2_fi/dev-v2.0.json"
@@ -94,7 +97,7 @@ with jsonlines.open('squad2-en/meta.jsonl', 'r') as squad:
                     meta_qas.append([ques, int(ans), color])
 
 impossibles = []
-with open('squad2-en/squad2.0/dev-v2.0.json', 'r') as dev, open('squad2-en/squad2.0/train-v2.0.json', 'r') as train:
+with open('squad2-en/dev-v2.0.json', 'r') as dev, open('squad2-en/train-v2.0.json', 'r') as train:
     dev = json.loads(dev.read())
     train = json.loads(train.read())
     for line in train['data']:
@@ -176,7 +179,7 @@ for file in sorted(Path(path_to_raw_html).glob('*.html')):
                                 pos = answer_pos[i]
                                 ans_pos_raw.append([qa[1], pos, word])
 
-                if impossibles[counter][1] == True:
+                if impossibles[counter][1] is True:
                     question_dict = {
                         "plausible_answers": [],
                         "question": question_str,
@@ -208,7 +211,7 @@ for file in sorted(Path(path_to_raw_html).glob('*.html')):
 
                 for answer in answers_str:
                     answer_dict = {
-                        "text": answer[1],
+                        "text": answer[1].strip(" .,-:"),
                         "answer_start": answer[2],
                         "texts": [text[2] for text in sorted(ans_pos_raw) if text[0] == answer[0]],
                         "starts": [text[1] for text in sorted(ans_pos_raw) if text[0] == answer[0]]
@@ -216,7 +219,7 @@ for file in sorted(Path(path_to_raw_html).glob('*.html')):
                     all_answer_starts_dict = {
                         "separate_answer_starts": ans_pos_raw
                     }
-                    if impossibles[counter][1] == True:
+                    if impossibles[counter][1] is True:
                         json_dict["data"][doc_id]["paragraphs"][para_id]["qas"][ques_id]["plausible_answers"].append(
                             answer_dict)
                     else:
@@ -253,6 +256,6 @@ with open(path_to_full_json, "r") as in_file:
 
 with open(path_to_dev_json, "w") as dev_file:
     json.dump(dev_dict, dev_file)
- 
+
 with open(path_to_train_json, "w") as train_file:
     json.dump(train_dict, train_file)
